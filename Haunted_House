@@ -1,0 +1,98 @@
+import heapq
+import math
+
+def manhattan(a, b):
+    return abs(a[0] - b[0]) + abs(a[1] - b[1])
+
+def euclidean(a, b):
+    return math.sqrt((a[0] - b[0])**2 + (a[1] - b[1])**2)
+
+def diagonal(a, b):
+    return max(abs(a[0] - b[0]), abs(a[1] - b[1]))
+
+def get_neighbors(pos, grid, allow_diagonal=False):
+    directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+    if allow_diagonal:
+        directions += [(-1, -1), (-1, 1), (1, -1), (1, 1)]
+    neighbors = []
+    rows, cols = len(grid), len(grid[0])
+    for dx, dy in directions:
+        nx, ny = pos[0] + dx, pos[1] + dy
+        if 0 <= nx < rows and 0 <= ny < cols and grid[nx][ny] != '1':
+            neighbors.append((nx, ny))
+    return neighbors
+
+def greedy_best_first_search(grid, start, goal, heuristic, allow_diagonal=False):
+    open_list = []
+    heapq.heappush(open_list, (heuristic(start, goal), start))
+    came_from = {}
+    visited = set()
+    while open_list:
+        _, current = heapq.heappop(open_list)
+        if current == goal:
+            break
+        visited.add(current)
+        for neighbor in get_neighbors(current, grid, allow_diagonal):
+            if neighbor not in visited:
+                heapq.heappush(open_list, (heuristic(neighbor, goal), neighbor))
+                came_from[neighbor] = current
+                visited.add(neighbor)
+    path = []
+    node = goal
+    while node != start:
+        path.append(node)
+        node = came_from.get(node)
+        if node is None:
+            return None, len(visited)
+    path.append(start)
+    path.reverse()
+    return path, len(visited)
+
+def a_star_search(grid, start, goal, heuristic, allow_diagonal=False):
+    open_list = []
+    heapq.heappush(open_list, (heuristic(start, goal), 0, start))
+    came_from = {}
+    cost_so_far = {start: 0}
+    visited = set()
+    while open_list:
+        _, cost, current = heapq.heappop(open_list)
+        if current == goal:
+            break
+        visited.add(current)
+        for neighbor in get_neighbors(current, grid, allow_diagonal):
+            new_cost = cost_so_far[current] + 1
+            if neighbor not in cost_so_far or new_cost < cost_so_far[neighbor]:
+                cost_so_far[neighbor] = new_cost
+                priority = new_cost + heuristic(neighbor, goal)
+                heapq.heappush(open_list, (priority, new_cost, neighbor))
+                came_from[neighbor] = current
+                visited.add(neighbor)
+    path = []
+    node = goal
+    while node != start:
+        path.append(node)
+        node = came_from.get(node)
+        if node is None:
+            return None, len(visited)
+    path.append(start)
+    path.reverse()
+    return path, len(visited)
+
+grid = [
+    ['S', '0', '0', '1', '0'],
+    ['1', '1', '0', '1', 'G'],
+    ['0', '0', '0', '1', '0'],
+    ['1', '1', '0', '1', '1'],
+    ['0', '0', '0', '0', '0']
+]
+
+start = (0, 0)
+goal = (1, 4)
+
+path_astar, explored_astar = a_star_search(grid, start, goal, manhattan, allow_diagonal=True)
+print("A* Path:", path_astar)
+print("Nodes Explored:", explored_astar)
+
+path_greedy, explored_greedy = greedy_best_first_search(grid, start, goal, euclidean, allow_diagonal=True)
+print("Greedy Path:", path_greedy)
+print("Nodes Explored:", explored_greedy)
