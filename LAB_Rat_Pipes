@@ -1,0 +1,97 @@
+import math
+import heapq
+from collections import deque, defaultdict
+
+def euclidean_distance(a, b):
+    return math.sqrt((a[0] - b[0])**2 + (a[1] - b[1])**2)
+
+def dfs(graph, start, goal):
+    stack = [(start, [start], 0)]
+    visited = set()
+    while stack:
+        current, path, cost = stack.pop()
+        if current == goal:
+            return path, cost, len(visited)
+        if current not in visited:
+            visited.add(current)
+            for neighbor, weight in graph[current]:
+                stack.append((neighbor, path + [neighbor], cost + weight))
+    return None, 0, len(visited)
+
+def bfs(graph, start, goal):
+    queue = deque([(start, [start], 0)])
+    visited = set()
+    while queue:
+        current, path, cost = queue.popleft()
+        if current == goal:
+            return path, cost, len(visited)
+        if current not in visited:
+            visited.add(current)
+            for neighbor, weight in graph[current]:
+                queue.append((neighbor, path + [neighbor], cost + weight))
+    return None, 0, len(visited)
+
+def uniform_cost_search(graph, start, goal):
+    open_list = [(0, start, [start])]
+    visited = set()
+    while open_list:
+        cost, current, path = heapq.heappop(open_list)
+        if current == goal:
+            return path, cost, len(visited)
+        if current not in visited:
+            visited.add(current)
+            for neighbor, weight in graph[current]:
+                heapq.heappush(open_list, (cost + weight, neighbor, path + [neighbor]))
+    return None, 0, len(visited)
+
+def a_star_search(graph, start, goal, coordinates):
+    open_list = [(euclidean_distance(coordinates[start], coordinates[goal]), 0, start, [start])]
+    visited = set()
+    while open_list:
+        _, cost, current, path = heapq.heappop(open_list)
+        if current == goal:
+            return path, cost, len(visited)
+        if current not in visited:
+            visited.add(current)
+            for neighbor, weight in graph[current]:
+                new_cost = cost + weight
+                heuristic = euclidean_distance(coordinates[neighbor], coordinates[goal])
+                heapq.heappush(open_list, (new_cost + heuristic, new_cost, neighbor, path + [neighbor]))
+    return None, 0, len(visited)
+
+junction_count = int(input())
+pipe_count = int(input())
+
+graph = defaultdict(list)
+for _ in range(pipe_count):
+    a, b, cost = map(int, input().split())
+    graph[a].append((b, cost))
+    graph[b].append((a, cost))
+
+coordinates = {}
+for i in range(junction_count):
+    x, y = map(float, input().split())
+    coordinates[i] = (x, y)
+
+start, goal = map(int, input().split())
+
+path_dfs, cost_dfs, visited_dfs = dfs(graph, start, goal)
+path_bfs, cost_bfs, visited_bfs = bfs(graph, start, goal)
+path_ucs, cost_ucs, visited_ucs = uniform_cost_search(graph, start, goal)
+path_astar, cost_astar, visited_astar = a_star_search(graph, start, goal, coordinates)
+
+print("DFS Path:", path_dfs)
+print("DFS Cost:", cost_dfs)
+print("DFS Visited:", visited_dfs)
+
+print("\nBFS Path:", path_bfs)
+print("BFS Cost:", cost_bfs)
+print("BFS Visited:", visited_bfs)
+
+print("\nUCS Path:", path_ucs)
+print("UCS Cost:", cost_ucs)
+print("UCS Visited:", visited_ucs)
+
+print("\nA* Path:", path_astar)
+print("A* Cost:", cost_astar)
+print("A* Visited:", visited_astar)
