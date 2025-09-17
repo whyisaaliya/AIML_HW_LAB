@@ -1,0 +1,52 @@
+import os
+import time
+import random
+
+GRID_SIZE = 5
+
+class VacuumCleaner:
+    def __init__(self):
+        self.grid = [['0' for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
+        self.place_dust()
+        self.x = 0
+        self.y = 0
+        self.grid[self.y][self.x] = '$'
+
+    def place_dust(self):
+        # Randomly place dust on the grid (e.g., 8 random dust spots)
+        dust_count = random.randint(5, 10)
+        for _ in range(dust_count):
+            dx = random.randint(0, GRID_SIZE - 1)
+            dy = random.randint(0, GRID_SIZE - 1)
+            if (dx, dy) != (0, 0):  # Ensure start is clean
+                self.grid[dy][dx] = '#'
+
+    def display_grid(self):
+        os.system('cls' if os.name == 'nt' else 'clear')
+        print("\nVacuum Cleaner Auto-Cleaning Simulation\n")
+        for row in self.grid:
+            print(' '.join(row))
+        time.sleep(0.5)
+
+    def auto_clean(self):
+        for y in range(GRID_SIZE):
+            row_range = range(GRID_SIZE) if y % 2 == 0 else range(GRID_SIZE - 1, -1, -1)
+            for x in row_range:
+                # Clean previous position
+                if (self.x, self.y) != (x, y):
+                    self.grid[self.y][self.x] = '0'
+
+                self.x, self.y = x, y
+                # Clean current position
+                self.grid[self.y][self.x] = '$'
+
+                self.display_grid()
+
+        print("\nCleaning Complete! All cells visited.")
+
+# Run the Auto Vacuum Cleaner
+if __name__ == "__main__":
+    vacuum_bot = VacuumCleaner()
+    vacuum_bot.display_grid()
+    input("\nPress Enter to start auto-cleaning...")
+    vacuum_bot.auto_clean()
